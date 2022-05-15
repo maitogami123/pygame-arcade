@@ -354,7 +354,7 @@ class GameView(arcade.View):
         self.end_of_map = 0
 
         # Level
-        self.level = 1
+        self.level = 2
 
         # Lives
         self.lives = 3;
@@ -416,6 +416,7 @@ class GameView(arcade.View):
         self.player_sprite.center_x = PLAYER_START_X
         self.player_sprite.center_y = PLAYER_START_Y
         self.scene.add_sprite_list_after(LAYER_NAME_PLAYER, LAYER_NAME_BACKGROUND)
+        self.scene.add_sprite_list_after(LAYER_NAME_PLAYER, LAYER_NAME_LADDERS)
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
         # --- Load in a map from the tiled editor ---
         # Calculate the right edge of the my_map in pixels
