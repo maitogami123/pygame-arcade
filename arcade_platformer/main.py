@@ -52,6 +52,7 @@ TIME_LIMIT = 60
 # Total levels
 LEVELS = 5
 
+
 # Player starting position
 PLAYER_START_X = 64
 PLAYER_START_Y = 225
@@ -916,8 +917,8 @@ class GameCompleteView(arcade.View):
 
     def on_mouse_press(self, _x, _y, _button, _modifiers):
         """Use a mouse press to advance to the 'game' view."""
-        menu_view = MainMenu()
-        self.window.show_view(menu_view)
+        my_window = MyWindow()
+        self.window.show_view(my_window)
 
 # --- Method 1 for handling click events,
 # Create a child class.
