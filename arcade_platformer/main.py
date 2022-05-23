@@ -368,11 +368,12 @@ class GameView(arcade.View):
         self.left_down = False;
         self.right_down = False;
         # Load sounds
-        self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
-        self.jump_sound = arcade.load_sound(":resources:sounds/jump1.wav")
-        self.game_over = arcade.load_sound(":resources:sounds/gameover1.wav")
-        self.shoot_sound = arcade.load_sound(":resources:sounds/hurt5.wav")
-        self.hit_sound = arcade.load_sound(":resources:sounds/hit5.wav")
+        sound_path = ASSETS_PATH / 'sounds'
+        self.collect_coin_sound = arcade.load_sound(sound_path / f"coin1.wav")
+        self.jump_sound = arcade.load_sound(sound_path / f"jump1.wav")
+        self.game_over = arcade.load_sound(sound_path / f"gameover1.wav")
+        self.shoot_sound = arcade.load_sound(sound_path / f"hurt5.wav")
+        self.hit_sound = arcade.load_sound(sound_path / f"hit5.wav")
         arcade.set_background_color((208,244,247))
 
     def setup(self, prev_score = 0):
@@ -893,7 +894,6 @@ def main():
     menu_view = MainMenu()
     window.show_view(menu_view)
     arcade.run()
-
 
 if __name__ == "__main__":
     main()
