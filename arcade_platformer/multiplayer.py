@@ -7,9 +7,11 @@ import os
 import math
 import arcade.gui
 
+from Network import Network
+
 # Constants
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 650
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
 SCREEN_TITLE = "GeaMonkee's Adventure"
 
 # Shooting Constants
@@ -47,7 +49,7 @@ RIGHT_FACING = 0
 LEFT_FACING = 1
 
 # Timer
-TIME_LIMIT = 60
+# TIME_LIMIT = 60
 
 # Total levels
 LEVELS = 5
@@ -69,6 +71,8 @@ LAYER_NAME_DOOR = "Doors"
 LAYER_NAME_PLAYER = "Player"
 LAYER_NAME_ENEMIES = "Enemies"
 LAYER_NAME_BULLETS = "Bullets"
+
+clientNumber = 0
 
 def load_texture_pair(filename):
     """
@@ -316,6 +320,14 @@ class MainMenu(arcade.View):
         game_view = GameView()
         self.window.show_view(game_view)
 
+
+def read_pos(str): 
+    str = str.split(',')
+    return float(str[0]), float(str[1])
+
+def make_pos(tup):
+    return str(tup[0]) +  "," + str(tup[1])
+
 class GameView(arcade.View):
     """
     Main application class.
@@ -325,10 +337,10 @@ class GameView(arcade.View):
 
         # Call the parent class and set up the window
         super().__init__()
-
         # Set the path to start with this program
         file_path = os.path.dirname(os.path.abspath(__file__))
         os.chdir(file_path)
+        self.n = Network()
 
         # Track the current state of what key is pressed
         self.left_pressed = False
@@ -374,7 +386,7 @@ class GameView(arcade.View):
         self.lives = 3;
 
         # Times
-        self.times = TIME_LIMIT;
+        # self.times = TIME_LIMIT;
 
         # Highest Score
         self.high_score = 0;
@@ -392,7 +404,6 @@ class GameView(arcade.View):
 
     def setup(self, prev_score = 0):
         """Set up the game here. Call this function to restart the game."""
-        
         # Set up the Cameras
         self.camera = arcade.Camera(self.window.width, self.window.height)
         self.gui_camera = arcade.Camera(self.window.width, self.window.height)
@@ -430,9 +441,13 @@ class GameView(arcade.View):
         self.player_sprite = PlayerCharacter()
         self.player_sprite.center_x = PLAYER_START_X
         self.player_sprite.center_y = PLAYER_START_Y
+        self.player_sprite_2 = PlayerCharacter()
+        self.player_sprite_2.center_x = PLAYER_START_X + 50
+        self.player_sprite_2.center_y = PLAYER_START_Y + 50
         self.scene.add_sprite_list_after(LAYER_NAME_PLAYER, LAYER_NAME_BACKGROUND)
         self.scene.add_sprite_list_after(LAYER_NAME_PLAYER, LAYER_NAME_LADDERS)
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
+        self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite_2)
         # --- Load in a map from the tiled editor ---
         # Calculate the right edge of the my_map in pixels
         self.end_of_map = self.tile_map.width * GRID_PIXEL_SIZE
@@ -483,6 +498,14 @@ class GameView(arcade.View):
             ladders=self.scene[LAYER_NAME_LADDERS],
         )
 
+        self.physics_engine_2 = arcade.PhysicsEnginePlatformer(
+            self.player_sprite_2, 
+            gravity_constant=GRAVITY, 
+            walls=self.scene["Platforms"],
+            platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+            ladders=self.scene[LAYER_NAME_LADDERS],
+        )
+
     def on_show(self):
         self.setup()
 
@@ -518,14 +541,14 @@ class GameView(arcade.View):
             18,
         )
 
-        times_left = f"Times: {math.floor(self.times)}"
-        arcade.draw_text(
-            times_left,
-            880,
-            620,
-            arcade.csscolor.BLACK,
-            18,
-        )
+        # times_left = f"Times: {math.floor(self.times)}"
+        # arcade.draw_text(
+        #     times_left,
+        #     880,
+        #     620,
+        #     arcade.csscolor.BLACK,
+        #     18,
+        # )
     
     def process_keychange(self):
         """
@@ -604,21 +627,27 @@ class GameView(arcade.View):
     def on_update(self, delta_time):
         """Movement and game logic"""
         # Send and recived player 2 pos here
+
+        p2Pos = read_pos(self.n.send(make_pos((self.player_sprite.center_x, self.player_sprite.center_y))))
+
+        self.player_sprite_2.center_x = p2Pos[0]
+        self.player_sprite_2.center_y = p2Pos[1]
+        self.physics_engine_2.update()
         # Move the player with the physics engine
         self.physics_engine.update()
-        self.times -= delta_time
-        if self.times < 0:
-            arcade.play_sound(self.game_over)
-            self.player_sprite.center_x = PLAYER_START_X
-            self.player_sprite.center_y = PLAYER_START_Y
-            self.lives -= 1
-            self.high_score = self.score if (self.score > self.high_score) else self.high_score;
-            self.score = 0;
-            self.times = TIME_LIMIT;
-            if (self.lives == 0):
-                game_over = GameOverView(self.high_score)
-                self.window.show_view(game_over)
-                return
+        # self.times -= delta_time
+        # if self.times < 0:
+        #     arcade.play_sound(self.game_over)
+        #     self.player_sprite.center_x = PLAYER_START_X
+        #     self.player_sprite.center_y = PLAYER_START_Y
+        #     self.lives -= 1
+        #     self.high_score = self.score if (self.score > self.high_score) else self.high_score;
+        #     self.score = 0;
+        #     self.times = TIME_LIMIT;
+        #     if (self.lives == 0):
+        #         game_over = GameOverView(self.high_score)
+        #         self.window.show_view(game_over)
+        #         return
         if self.physics_engine.can_jump():
             self.player_sprite.can_jump = False
         else:
@@ -736,7 +765,7 @@ class GameView(arcade.View):
                 self.lives -= 1
                 self.high_score = self.score if (self.score > self.high_score) else self.high_score;
                 self.score = 0;
-                self.times = TIME_LIMIT;
+                # self.times = TIME_LIMIT;
                 if (self.lives == 0):
                     game_over = GameOverView(self.high_score)
                     self.window.show_view(game_over)
@@ -744,14 +773,14 @@ class GameView(arcade.View):
             if self.scene["Doors"] in collision.sprite_lists:
                 # Advance to the next level
                 self.level += 1;
-                self.score += math.floor(self.times * 10);
+                # self.score += math.floor(self.times * 10);
                 self.lives = 3;
                 if self.level == LEVELS:
                     game_complete = GameCompleteView(self.high_score)
                     self.window.show_view(game_complete)
                     return
                 # Load the next level
-                self.times = TIME_LIMIT
+                # self.times = TIME_LIMIT
                 self.setup(self.score)
             else:
                 # Figure out how many points this coin is worth
@@ -773,7 +802,7 @@ class GameView(arcade.View):
             self.lives -= 1
             self.high_score = self.score if (self.score > self.high_score) else self.high_score;
             self.score = 0;
-            self.times = TIME_LIMIT;
+            # self.times = TIME_LIMIT;
             if (self.lives == 0):
                 game_over = GameOverView(self.high_score)
                 self.window.show_view(game_over)
@@ -788,7 +817,7 @@ class GameView(arcade.View):
             self.lives -= 1
             self.high_score = self.score if (self.score > self.high_score) else self.high_score;
             self.score = 0;
-            self.times = TIME_LIMIT;
+            # self.times = TIME_LIMIT;
             if (self.lives == 0):
                 game_over = GameOverView(self.high_score)
                 self.window.show_view(game_over)
